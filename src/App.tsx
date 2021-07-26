@@ -1,26 +1,39 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import Lottie from './lottie-web-master'
+import hotdogAnimation from './hot-dog-jump.json'; 
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+     <LottieLoader json={hotdogAnimation} />
     </div>
   );
 }
+
+type LottieProps = {
+  json: Object,
+}
+
+export const LottieLoader = React.memo(({json}: LottieProps ) => {
+  const element = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if(element.current)
+     Lottie.loadAnimation({
+         animationData: json,
+         container: element.current,
+         renderer: 'svg', 
+         loop: true
+       });
+  }, [element, json]); 
+
+   
+  return  (
+    <div>
+        <div className="animation" ref={element}></div>
+    </div>
+  );
+});
 
 export default App;
