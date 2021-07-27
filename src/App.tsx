@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import Lottie from './lottie-web-master'
+import Lottie from './lottie-web-master/build/player/lottie_light.js'
 import hotdogAnimation from './hot-dog-jump.json'; 
 
 function App() {

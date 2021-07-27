@@ -1,3 +1,5 @@
+/* eslint no-undef: "off"*/
+
 (typeof navigator !== "undefined") && (function(root, factory) {
     if (typeof define === "function" && define.amd) {
         define(function() {
