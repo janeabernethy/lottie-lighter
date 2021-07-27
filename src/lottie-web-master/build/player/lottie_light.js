@@ -4608,214 +4608,7 @@ var buildShapeString = function (pathNodes, length, closed, mat) {
 
 
 /* global createTag, createNS, isSafari, assetLoader */
-/* exported ImagePreloader */
 
-var ImagePreloader = (function () {
-  var proxyImage = (function () {
-    var canvas = createTag('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    var ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(0,0,0,0)';
-    ctx.fillRect(0, 0, 1, 1);
-    return canvas;
-  }());
-
-  function imageLoaded() {
-    this.loadedAssets += 1;
-    if (this.loadedAssets === this.totalImages && this.loadedFootagesCount === this.totalFootages) {
-      if (this.imagesLoadedCb) {
-        this.imagesLoadedCb(null);
-      }
-    }
-  }
-  function footageLoaded() {
-    this.loadedFootagesCount += 1;
-    if (this.loadedAssets === this.totalImages && this.loadedFootagesCount === this.totalFootages) {
-      if (this.imagesLoadedCb) {
-        this.imagesLoadedCb(null);
-      }
-    }
-  }
-
-  function getAssetsPath(assetData, assetsPath, originalPath) {
-    var path = '';
-    if (assetData.e) {
-      path = assetData.p;
-    } else if (assetsPath) {
-      var imagePath = assetData.p;
-      if (imagePath.indexOf('images/') !== -1) {
-        imagePath = imagePath.split('/')[1];
-      }
-      path = assetsPath + imagePath;
-    } else {
-      path = originalPath;
-      path += assetData.u ? assetData.u : '';
-      path += assetData.p;
-    }
-    return path;
-  }
-
-  function testImageLoaded(img) {
-    var _count = 0;
-    var intervalId = setInterval(function () {
-      var box = img.getBBox();
-      if (box.width || _count > 500) {
-        this._imageLoaded();
-        clearInterval(intervalId);
-      }
-      _count += 1;
-    }.bind(this), 50);
-  }
-
-  function createImageData(assetData) {
-    var path = getAssetsPath(assetData, this.assetsPath, this.path);
-    var img = createNS('image');
-    if (isSafari) {
-      this.testImageLoaded(img);
-    } else {
-      img.addEventListener('load', this._imageLoaded, false);
-    }
-    img.addEventListener('error', function () {
-      ob.img = proxyImage;
-      this._imageLoaded();
-    }.bind(this), false);
-    img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', path);
-    if (this._elementHelper.append) {
-      this._elementHelper.append(img);
-    } else {
-      this._elementHelper.appendChild(img);
-    }
-    var ob = {
-      img: img,
-      assetData: assetData,
-    };
-    return ob;
-  }
-
-  function createImgData(assetData) {
-    var path = getAssetsPath(assetData, this.assetsPath, this.path);
-    var img = createTag('img');
-    img.crossOrigin = 'anonymous';
-    img.addEventListener('load', this._imageLoaded, false);
-    img.addEventListener('error', function () {
-      ob.img = proxyImage;
-      this._imageLoaded();
-    }.bind(this), false);
-    img.src = path;
-    var ob = {
-      img: img,
-      assetData: assetData,
-    };
-    return ob;
-  }
-
-  function createFootageData(data) {
-    var ob = {
-      assetData: data,
-    };
-    var path = getAssetsPath(data, this.assetsPath, this.path);
-    assetLoader.load(path, function (footageData) {
-      ob.img = footageData;
-      this._footageLoaded();
-    }.bind(this), function () {
-      ob.img = {};
-      this._footageLoaded();
-    }.bind(this));
-    return ob;
-  }
-
-  function loadAssets(assets, cb) {
-    this.imagesLoadedCb = cb;
-    var i;
-    var len = assets.length;
-    for (i = 0; i < len; i += 1) {
-      if (!assets[i].layers) {
-        if (!assets[i].t || assets[i].t === 'seq') {
-          this.totalImages += 1;
-          this.images.push(this._createImageData(assets[i]));
-        } else if (assets[i].t === 3) {
-          this.totalFootages += 1;
-          this.images.push(this.createFootageData(assets[i]));
-        }
-      }
-    }
-  }
-
-  function setPath(path) {
-    this.path = path || '';
-  }
-
-  function setAssetsPath(path) {
-    this.assetsPath = path || '';
-  }
-
-  function getAsset(assetData) {
-    var i = 0;
-    var len = this.images.length;
-    while (i < len) {
-      if (this.images[i].assetData === assetData) {
-        return this.images[i].img;
-      }
-      i += 1;
-    }
-    return null;
-  }
-
-  function destroy() {
-    this.imagesLoadedCb = null;
-    this.images.length = 0;
-  }
-
-  function loadedImages() {
-    return this.totalImages === this.loadedAssets;
-  }
-
-  function loadedFootages() {
-    return this.totalFootages === this.loadedFootagesCount;
-  }
-
-  function setCacheType(type, elementHelper) {
-    if (type === 'svg') {
-      this._elementHelper = elementHelper;
-      this._createImageData = this.createImageData.bind(this);
-    } else {
-      this._createImageData = this.createImgData.bind(this);
-    }
-  }
-
-  function ImagePreloaderFactory() {
-    this._imageLoaded = imageLoaded.bind(this);
-    this._footageLoaded = footageLoaded.bind(this);
-    this.testImageLoaded = testImageLoaded.bind(this);
-    this.createFootageData = createFootageData.bind(this);
-    this.assetsPath = '';
-    this.path = '';
-    this.totalImages = 0;
-    this.totalFootages = 0;
-    this.loadedAssets = 0;
-    this.loadedFootagesCount = 0;
-    this.imagesLoadedCb = null;
-    this.images = [];
-  }
-
-  ImagePreloaderFactory.prototype = {
-    loadAssets: loadAssets,
-    setAssetsPath: setAssetsPath,
-    setPath: setPath,
-    loadedImages: loadedImages,
-    loadedFootages: loadedFootages,
-    destroy: destroy,
-    getAsset: getAsset,
-    createImgData: createImgData,
-    createImageData: createImageData,
-    imageLoaded: imageLoaded,
-    footageLoaded: footageLoaded,
-    setCacheType: setCacheType,
-  };
-
-  return ImagePreloaderFactory;
-}());
 
 /* exported featureSupport */
 
@@ -6414,8 +6207,6 @@ BaseRenderer.prototype.checkLayers = function (num) {
 
 BaseRenderer.prototype.createItem = function (layer) {
   switch (layer.ty) {
-    case 2:
-      return this.createImage(layer);
     case 0:
       return this.createComp(layer);
     case 1:
@@ -6525,7 +6316,6 @@ BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
   this.globalData.fontManager.addFonts(animData.fonts, fontsContainer);
   this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
   this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
-  this.globalData.imageLoader = this.animationItem.imagePreloader;
   this.globalData.frameId = 0;
   this.globalData.frameRate = animData.fr;
   this.globalData.nm = animData.nm;
@@ -6535,8 +6325,7 @@ BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
   };
 };
 
-/* global createElementID, extendPrototype, BaseRenderer, NullElement, SVGShapeElement, SVGTextLottieElement,
-IImageElement, SVGCompElement, ISolidElement, createNS, locationHref, createSizedArray, expressionsPlugin */
+/* global createElementID, extendPrototype, BaseRenderer, NullElement, SVGShapeElement, SVGTextLottieElement, SVGCompElement, ISolidElement, createNS, locationHref, createSizedArray, expressionsPlugin */
 
 function SVGRenderer(animationItem, config) {
   this.animationItem = animationItem;
@@ -6570,7 +6359,6 @@ function SVGRenderer(animationItem, config) {
   this.layerElement = maskElement;
   this.renderConfig = {
     preserveAspectRatio: (config && config.preserveAspectRatio) || 'xMidYMid meet',
-    imagePreserveAspectRatio: (config && config.imagePreserveAspectRatio) || 'xMidYMid slice',
     progressiveLoad: (config && config.progressiveLoad) || false,
     hideOnTransparent: !((config && config.hideOnTransparent === false)),
     viewBoxOnly: (config && config.viewBoxOnly) || false,
@@ -6612,9 +6400,6 @@ SVGRenderer.prototype.createText = function (data) {
   return new SVGTextLottieElement(data, this.globalData, this);
 };
 
-SVGRenderer.prototype.createImage = function (data) {
-  return new IImageElement(data, this.globalData, this);
-};
 
 SVGRenderer.prototype.createComp = function (data) {
   return new SVGCompElement(data, this.globalData, this);
@@ -8377,38 +8162,11 @@ ICompElement.prototype.destroy = function () {
 
 /* global extendPrototype, BaseElement, TransformElement, SVGBaseElement, HierarchyElement, FrameElement, RenderableDOMElement, createNS */
 
-function IImageElement(data, globalData, comp) {
-  this.assetData = globalData.getAssetData(data.refId);
-  this.initElement(data, globalData, comp);
-  this.sourceRect = {
-    top: 0, left: 0, width: this.assetData.w, height: this.assetData.h,
-  };
-}
 
-extendPrototype([BaseElement, TransformElement, SVGBaseElement, HierarchyElement, FrameElement, RenderableDOMElement], IImageElement);
-
-IImageElement.prototype.createContent = function () {
-  var assetPath = this.globalData.getAssetsPath(this.assetData);
-
-  this.innerElem = createNS('image');
-  this.innerElem.setAttribute('width', this.assetData.w + 'px');
-  this.innerElem.setAttribute('height', this.assetData.h + 'px');
-  this.innerElem.setAttribute('preserveAspectRatio', this.assetData.pr || this.globalData.renderConfig.imagePreserveAspectRatio);
-  this.innerElem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', assetPath);
-
-  this.layerElement.appendChild(this.innerElem);
-};
-
-IImageElement.prototype.sourceRectAtTime = function () {
-  return this.sourceRect;
-};
-
-/* global extendPrototype, IImageElement, createNS */
 
 function ISolidElement(data, globalData, comp) {
   this.initElement(data, globalData, comp);
 }
-extendPrototype([IImageElement], ISolidElement);
 
 ISolidElement.prototype.createContent = function () {
   var rect = createNS('rect');
@@ -9785,7 +9543,7 @@ var animationManager = (function () {
   return moduleOb;
 }());
 
-/* global createElementID, subframeEnabled, ProjectInterface, ImagePreloader, extendPrototype, BaseEvent,
+/* global createElementID, subframeEnabled, ProjectInterface, extendPrototype, BaseEvent,
 CanvasRenderer, SVGRenderer, HybridRenderer, assetLoader, dataManager, expressionsPlugin, BMEnterFrameEvent, BMCompleteLoopEvent,
 BMCompleteEvent, BMSegmentStartEvent, BMDestroyEvent, BMEnterFrameEvent, BMCompleteLoopEvent, BMCompleteEvent, BMSegmentStartEvent,
 BMDestroyEvent, BMRenderFrameErrorEvent, BMConfigErrorEvent, markerParser */
@@ -9819,7 +9577,6 @@ var AnimationItem = function () {
   this._idle = true;
   this._completedLoop = false;
   this.projectInterface = ProjectInterface();
-  this.imagePreloader = new ImagePreloader();
   this.markers = [];
 };
 
@@ -9846,7 +9603,6 @@ AnimationItem.prototype.setParams = function (params) {
       this.renderer = new HybridRenderer(this, params.rendererSettings);
       break;
   }
-  this.imagePreloader.setCacheType(animType, this.renderer.globalData.defs);
   this.renderer.setProjectInterface(this.projectInterface);
   this.animType = animType;
   if (params.loop === ''
@@ -10021,16 +9777,6 @@ AnimationItem.prototype.loadSegments = function () {
   this.loadNextSegment();
 };
 
-AnimationItem.prototype.imagesLoaded = function () {
-  this.trigger('loaded_images');
-  this.checkLoaded();
-};
-
-AnimationItem.prototype.preloadImages = function () {
-  this.imagePreloader.setAssetsPath(this.assetsPath);
-  this.imagePreloader.setPath(this.path);
-  this.imagePreloader.loadAssets(this.animationData.assets, this.imagesLoaded.bind(this));
-};
 
 AnimationItem.prototype.configAnimation = function (animData) {
   if (!this.renderer) {
@@ -10057,7 +9803,6 @@ AnimationItem.prototype.configAnimation = function (animData) {
     this.renderer.searchExtraCompositions(animData.assets);
     this.markers = markerParser(animData.markers || []);
     this.trigger('config_ready');
-    this.preloadImages();
     this.loadSegments();
     this.updaFrameModifier();
     this.waitForFontsLoaded();
@@ -10081,8 +9826,8 @@ AnimationItem.prototype.waitForFontsLoaded = function () {
 AnimationItem.prototype.checkLoaded = function () {
   if (!this.isLoaded
         && this.renderer.globalData.fontManager.isLoaded
-        && (this.imagePreloader.loadedImages() || this.renderer.rendererType !== 'canvas')
-        && (this.imagePreloader.loadedFootages())
+        && (this.renderer.rendererType !== 'canvas')
+       
   ) {
     this.isLoaded = true;
     dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
@@ -10362,7 +10107,6 @@ AnimationItem.prototype.destroy = function (name) {
     return;
   }
   this.renderer.destroy();
-  this.imagePreloader.destroy();
   this.trigger('destroy');
   this._cbs = null;
   this.onEnterFrame = null;
@@ -10372,7 +10116,6 @@ AnimationItem.prototype.destroy = function (name) {
   this.onDestroy = null;
   this.renderer = null;
   this.renderer = null;
-  this.imagePreloader = null;
   this.projectInterface = null;
 };
 
@@ -10404,12 +10147,6 @@ AnimationItem.prototype.getAssetsPath = function (assetData) {
   var path = '';
   if (assetData.e) {
     path = assetData.p;
-  } else if (this.assetsPath) {
-    var imagePath = assetData.p;
-    if (imagePath.indexOf('images/') !== -1) {
-      imagePath = imagePath.split('/')[1];
-    }
-    path = this.assetsPath + imagePath;
   } else {
     path = this.path;
     path += assetData.u ? assetData.u : '';
