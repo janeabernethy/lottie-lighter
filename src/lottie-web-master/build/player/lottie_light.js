@@ -6209,8 +6209,6 @@ BaseRenderer.prototype.createItem = function (layer) {
   switch (layer.ty) {
     case 0:
       return this.createComp(layer);
-    case 1:
-      return this.createSolid(layer);
     case 3:
       return this.createNull(layer);
     case 4:
@@ -6325,7 +6323,7 @@ BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
   };
 };
 
-/* global createElementID, extendPrototype, BaseRenderer, NullElement, SVGShapeElement, SVGTextLottieElement, SVGCompElement, ISolidElement, createNS, locationHref, createSizedArray, expressionsPlugin */
+/* global createElementID, extendPrototype, BaseRenderer, NullElement, SVGShapeElement, SVGTextLottieElement, SVGCompElement, createNS, locationHref, createSizedArray, expressionsPlugin */
 
 function SVGRenderer(animationItem, config) {
   this.animationItem = animationItem;
@@ -6403,10 +6401,6 @@ SVGRenderer.prototype.createText = function (data) {
 
 SVGRenderer.prototype.createComp = function (data) {
   return new SVGCompElement(data, this.globalData, this);
-};
-
-SVGRenderer.prototype.createSolid = function (data) {
-  return new ISolidElement(data, this.globalData, this);
 };
 
 SVGRenderer.prototype.configAnimation = function (animData) {
@@ -8162,22 +8156,6 @@ ICompElement.prototype.destroy = function () {
 
 /* global extendPrototype, BaseElement, TransformElement, SVGBaseElement, HierarchyElement, FrameElement, RenderableDOMElement, createNS */
 
-
-
-function ISolidElement(data, globalData, comp) {
-  this.initElement(data, globalData, comp);
-}
-
-ISolidElement.prototype.createContent = function () {
-  var rect = createNS('rect');
-  /// /rect.style.width = this.data.sw;
-  /// /rect.style.height = this.data.sh;
-  /// /rect.style.fill = this.data.sc;
-  rect.setAttribute('width', this.data.sw);
-  rect.setAttribute('height', this.data.sh);
-  rect.setAttribute('fill', this.data.sc);
-  this.layerElement.appendChild(rect);
-};
 
 /* global PropertyFactory, extendPrototype, RenderableElement, BaseElement, FrameElement */
 
