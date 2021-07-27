@@ -4605,90 +4605,7 @@ var buildShapeString = function (pathNodes, length, closed, mat) {
   return shapeString;
 };
 
-/* global Howl */
-/* exported audioControllerFactory */
 
-var audioControllerFactory = (function () {
-  function AudioController(audioFactory) {
-    this.audios = [];
-    this.audioFactory = audioFactory;
-    this._volume = 1;
-    this._isMuted = false;
-  }
-
-  AudioController.prototype = {
-    addAudio: function (audio) {
-      this.audios.push(audio);
-    },
-    pause: function () {
-      var i;
-      var len = this.audios.length;
-      for (i = 0; i < len; i += 1) {
-        this.audios[i].pause();
-      }
-    },
-    resume: function () {
-      var i;
-      var len = this.audios.length;
-      for (i = 0; i < len; i += 1) {
-        this.audios[i].resume();
-      }
-    },
-    setRate: function (rateValue) {
-      var i;
-      var len = this.audios.length;
-      for (i = 0; i < len; i += 1) {
-        this.audios[i].setRate(rateValue);
-      }
-    },
-    createAudio: function (assetPath) {
-      if (this.audioFactory) {
-        return this.audioFactory(assetPath);
-      } if (Howl) {
-        return new Howl({
-          src: [assetPath],
-        });
-      }
-      return {
-        isPlaying: false,
-        play: function () { this.isPlaying = true; },
-        seek: function () { this.isPlaying = false; },
-        playing: function () {},
-        rate: function () {},
-        setVolume: function () {},
-      };
-    },
-    setAudioFactory: function (audioFactory) {
-      this.audioFactory = audioFactory;
-    },
-    setVolume: function (value) {
-      this._volume = value;
-      this._updateVolume();
-    },
-    mute: function () {
-      this._isMuted = true;
-      this._updateVolume();
-    },
-    unmute: function () {
-      this._isMuted = false;
-      this._updateVolume();
-    },
-    getVolume: function () {
-      return this._volume;
-    },
-    _updateVolume: function () {
-      var i;
-      var len = this.audios.length;
-      for (i = 0; i < len; i += 1) {
-        this.audios[i].volume(this._volume * (this._isMuted ? 0 : 1));
-      }
-    },
-  };
-
-  return function () {
-    return new AudioController();
-  };
-}());
 
 /* global createTag, createNS, isSafari, assetLoader */
 /* exported ImagePreloader */
@@ -6475,7 +6392,7 @@ var markerParser = (
     };
   }());
 
-/* global AudioElement, FootageElement, FontManager */
+/* global, FootageElement, FontManager */
 
 function BaseRenderer() {}
 BaseRenderer.prototype.checkLayers = function (num) {
@@ -6509,8 +6426,6 @@ BaseRenderer.prototype.createItem = function (layer) {
       return this.createShape(layer);
     case 5:
       return this.createText(layer);
-    case 6:
-      return this.createAudio(layer);
     case 13:
       return this.createCamera(layer);
     case 15:
@@ -6522,10 +6437,6 @@ BaseRenderer.prototype.createItem = function (layer) {
 
 BaseRenderer.prototype.createCamera = function () {
   throw new Error('You\'re using a 3d camera. Try the html renderer.');
-};
-
-BaseRenderer.prototype.createAudio = function (data) {
-  return new AudioElement(data, this.globalData, this);
 };
 
 BaseRenderer.prototype.createFootage = function (data) {
@@ -6615,7 +6526,6 @@ BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
   this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
   this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
   this.globalData.imageLoader = this.animationItem.imagePreloader;
-  this.globalData.audioController = this.animationItem.audioController;
   this.globalData.frameId = 0;
   this.globalData.frameRate = animData.fr;
   this.globalData.nm = animData.nm;
@@ -8513,87 +8423,6 @@ ISolidElement.prototype.createContent = function () {
 
 /* global PropertyFactory, extendPrototype, RenderableElement, BaseElement, FrameElement */
 
-function AudioElement(data, globalData, comp) {
-  this.initFrame();
-  this.initRenderable();
-  this.assetData = globalData.getAssetData(data.refId);
-  this.initBaseData(data, globalData, comp);
-  this._isPlaying = false;
-  this._canPlay = false;
-  var assetPath = this.globalData.getAssetsPath(this.assetData);
-  this.audio = this.globalData.audioController.createAudio(assetPath);
-  this._currentTime = 0;
-  this.globalData.audioController.addAudio(this);
-  this.tm = data.tm ? PropertyFactory.getProp(this, data.tm, 0, globalData.frameRate, this) : { _placeholder: true };
-}
-
-AudioElement.prototype.prepareFrame = function (num) {
-  this.prepareRenderableFrame(num, true);
-  this.prepareProperties(num, true);
-  if (!this.tm._placeholder) {
-    var timeRemapped = this.tm.v;
-    this._currentTime = timeRemapped;
-  } else {
-    this._currentTime = num / this.data.sr;
-  }
-};
-
-extendPrototype([RenderableElement, BaseElement, FrameElement], AudioElement);
-
-AudioElement.prototype.renderFrame = function () {
-  if (this.isInRange && this._canPlay) {
-    if (!this._isPlaying) {
-      this.audio.play();
-      this.audio.seek(this._currentTime / this.globalData.frameRate);
-      this._isPlaying = true;
-    } else if (!this.audio.playing()
-      || Math.abs(this._currentTime / this.globalData.frameRate - this.audio.seek()) > 0.1
-    ) {
-      this.audio.seek(this._currentTime / this.globalData.frameRate);
-    }
-  }
-};
-
-AudioElement.prototype.show = function () {
-  // this.audio.play()
-};
-
-AudioElement.prototype.hide = function () {
-  this.audio.pause();
-  this._isPlaying = false;
-};
-
-AudioElement.prototype.pause = function () {
-  this.audio.pause();
-  this._isPlaying = false;
-  this._canPlay = false;
-};
-
-AudioElement.prototype.resume = function () {
-  this._canPlay = true;
-};
-
-AudioElement.prototype.setRate = function (rateValue) {
-  this.audio.rate(rateValue);
-};
-
-AudioElement.prototype.volume = function (volumeValue) {
-  this.audio.volume(volumeValue);
-};
-
-AudioElement.prototype.getBaseElement = function () {
-  return null;
-};
-
-AudioElement.prototype.destroy = function () {
-};
-
-AudioElement.prototype.sourceRectAtTime = function () {
-};
-
-AudioElement.prototype.initExpressions = function () {
-};
-
 /* global createSizedArray, PropertyFactory, extendPrototype, SVGRenderer, ICompElement, SVGBaseElement */
 
 function SVGCompElement(data, globalData, comp) {
@@ -9956,7 +9785,7 @@ var animationManager = (function () {
   return moduleOb;
 }());
 
-/* global createElementID, subframeEnabled, ProjectInterface, ImagePreloader, audioControllerFactory, extendPrototype, BaseEvent,
+/* global createElementID, subframeEnabled, ProjectInterface, ImagePreloader, extendPrototype, BaseEvent,
 CanvasRenderer, SVGRenderer, HybridRenderer, assetLoader, dataManager, expressionsPlugin, BMEnterFrameEvent, BMCompleteLoopEvent,
 BMCompleteEvent, BMSegmentStartEvent, BMDestroyEvent, BMEnterFrameEvent, BMCompleteLoopEvent, BMCompleteEvent, BMSegmentStartEvent,
 BMDestroyEvent, BMRenderFrameErrorEvent, BMConfigErrorEvent, markerParser */
@@ -9991,7 +9820,6 @@ var AnimationItem = function () {
   this._completedLoop = false;
   this.projectInterface = ProjectInterface();
   this.imagePreloader = new ImagePreloader();
-  this.audioController = audioControllerFactory();
   this.markers = [];
 };
 
@@ -10036,9 +9864,7 @@ AnimationItem.prototype.setParams = function (params) {
   this.autoloadSegments = Object.prototype.hasOwnProperty.call(params, 'autoloadSegments') ? params.autoloadSegments : true;
   this.assetsPath = params.assetsPath;
   this.initialSegment = params.initialSegment;
-  if (params.audioFactory) {
-    this.audioController.setAudioFactory(params.audioFactory);
-  }
+
   if (params.animationData) {
     this.configAnimation(params.animationData);
   } else if (params.path) {
@@ -10235,9 +10061,7 @@ AnimationItem.prototype.configAnimation = function (animData) {
     this.loadSegments();
     this.updaFrameModifier();
     this.waitForFontsLoaded();
-    if (this.isPaused) {
-      this.audioController.pause();
-    }
+   
   } catch (error) {
     this.triggerConfigError(error);
   }
@@ -10311,7 +10135,7 @@ AnimationItem.prototype.play = function (name) {
   }
   if (this.isPaused === true) {
     this.isPaused = false;
-    this.audioController.resume();
+
     if (this._idle) {
       this._idle = false;
       this.trigger('_active');
@@ -10327,7 +10151,7 @@ AnimationItem.prototype.pause = function (name) {
     this.isPaused = true;
     this._idle = true;
     this.trigger('_idle');
-    this.audioController.pause();
+
   }
 };
 
@@ -10567,34 +10391,9 @@ AnimationItem.prototype.setDirection = function (val) {
   this.updaFrameModifier();
 };
 
-AnimationItem.prototype.setVolume = function (val, name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  this.audioController.setVolume(val);
-};
-
-AnimationItem.prototype.getVolume = function () {
-  return this.audioController.getVolume();
-};
-
-AnimationItem.prototype.mute = function (name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  this.audioController.mute();
-};
-
-AnimationItem.prototype.unmute = function (name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  this.audioController.unmute();
-};
-
 AnimationItem.prototype.updaFrameModifier = function () {
   this.frameModifier = this.frameMult * this.playSpeed * this.playDirection;
-  this.audioController.setRate(this.playSpeed * this.playDirection);
+
 };
 
 AnimationItem.prototype.getPath = function () {
