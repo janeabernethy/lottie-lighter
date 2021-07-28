@@ -7928,12 +7928,6 @@ function inBrowser() {
   return typeof navigator !== 'undefined';
 }
 
-function installPlugin(type, plugin) {
-  if (type === 'expressions') {
-    expressionsPlugin = plugin;
-  }
-}
-
 function getFactory(name) {
   switch (name) {
     case 'propertyFactory':
@@ -7964,7 +7958,6 @@ lottie.goToAndStop = animationManager.goToAndStop;
 lottie.destroy = animationManager.destroy;
 lottie.setQuality = setQuality;
 lottie.inBrowser = inBrowser;
-lottie.installPlugin = installPlugin;
 lottie.freeze = animationManager.freeze;
 lottie.unfreeze = animationManager.unfreeze;
 lottie.setVolume = animationManager.setVolume;
