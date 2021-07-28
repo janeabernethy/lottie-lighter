@@ -12,11 +12,7 @@
         root.bodymovin = root.lottie;
     }
 }((window || {}), function(window) {
-	/* global locationHref:writable, animationManager, subframeEnabled:writable, defaultCurveSegments:writable, roundValues,
-:writable, PropertyFactory, ShapePropertyFactory, Matrix, idPrefix:writable */
-/* exported locationHref, subframeEnabled, idPrefix */
 
-'use strict';
 
 /* exported svgNS, locationHref, initialDefaultFrame */
 
@@ -34,13 +30,9 @@ addSaturationToRGB, addBrightnessToRGB, addHueToRGB, rgbToHex */
 
 var subframeEnabled = true;
 var idPrefix = '';
-var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-var cachedColors = {};
-var bmRnd;
 var bmPow = Math.pow;
 var bmSqrt = Math.sqrt;
 var bmFloor = Math.floor;
-var bmMax = Math.max;
 var bmMin = Math.min;
 
 var BMMath = {};
@@ -84,19 +76,6 @@ function roundValues(flag) {
 }
 roundValues(false);
 
-function styleDiv(element) {
-  element.style.position = 'absolute';
-  element.style.top = 0;
-  element.style.left = 0;
-  element.style.display = 'block';
-  element.style.transformOrigin = '0 0';
-  element.style.webkitTransformOrigin = '0 0';
-  element.style.backfaceVisibility = 'visible';
-  element.style.webkitBackfaceVisibility = 'visible';
-  element.style.transformStyle = 'preserve-3d';
-  element.style.webkitTransformStyle = 'preserve-3d';
-  element.style.mozTransformStyle = 'preserve-3d';
-}
 
 function BMEnterFrameEvent(type, currentTime, totalTime, frameMultiplier) {
   this.type = type;
@@ -139,10 +118,6 @@ function BMConfigErrorEvent(nativeError) {
   this.nativeError = nativeError;
 }
 
-function BMAnimationConfigErrorEvent(type, nativeError) {
-  this.type = type;
-  this.nativeError = nativeError;
-}
 
 var createElementID = (function () {
   var _count = 0;
@@ -152,89 +127,6 @@ var createElementID = (function () {
   };
 }());
 
-function HSVtoRGB(h, s, v) {
-  var r;
-  var g;
-  var b;
-  var i;
-  var f;
-  var p;
-  var q;
-  var t;
-  i = Math.floor(h * 6);
-  f = h * 6 - i;
-  p = v * (1 - s);
-  q = v * (1 - f * s);
-  t = v * (1 - (1 - f) * s);
-  switch (i % 6) {
-    case 0: r = v; g = t; b = p; break;
-    case 1: r = q; g = v; b = p; break;
-    case 2: r = p; g = v; b = t; break;
-    case 3: r = p; g = q; b = v; break;
-    case 4: r = t; g = p; b = v; break;
-    case 5: r = v; g = p; b = q; break;
-    default: break;
-  }
-  return [r,
-    g,
-    b];
-}
-
-function RGBtoHSV(r, g, b) {
-  var max = Math.max(r, g, b);
-  var min = Math.min(r, g, b);
-  var d = max - min;
-  var h;
-  var s = (max === 0 ? 0 : d / max);
-  var v = max / 255;
-
-  switch (max) {
-    case min: h = 0; break;
-    case r: h = (g - b) + d * (g < b ? 6 : 0); h /= 6 * d; break;
-    case g: h = (b - r) + d * 2; h /= 6 * d; break;
-    case b: h = (r - g) + d * 4; h /= 6 * d; break;
-    default: break;
-  }
-
-  return [
-    h,
-    s,
-    v,
-  ];
-}
-
-function addSaturationToRGB(color, offset) {
-  var hsv = RGBtoHSV(color[0] * 255, color[1] * 255, color[2] * 255);
-  hsv[1] += offset;
-  if (hsv[1] > 1) {
-    hsv[1] = 1;
-  } else if (hsv[1] <= 0) {
-    hsv[1] = 0;
-  }
-  return HSVtoRGB(hsv[0], hsv[1], hsv[2]);
-}
-
-function addBrightnessToRGB(color, offset) {
-  var hsv = RGBtoHSV(color[0] * 255, color[1] * 255, color[2] * 255);
-  hsv[2] += offset;
-  if (hsv[2] > 1) {
-    hsv[2] = 1;
-  } else if (hsv[2] < 0) {
-    hsv[2] = 0;
-  }
-  return HSVtoRGB(hsv[0], hsv[1], hsv[2]);
-}
-
-function addHueToRGB(color, offset) {
-  var hsv = RGBtoHSV(color[0] * 255, color[1] * 255, color[2] * 255);
-  hsv[0] += offset / 360;
-  if (hsv[0] > 1) {
-    hsv[0] -= 1;
-  } else if (hsv[0] < 0) {
-    hsv[0] += 1;
-  }
-  return HSVtoRGB(hsv[0], hsv[1], hsv[2]);
-}
 
 var rgbToHex = (function () {
   var colorMap = [];
@@ -347,13 +239,6 @@ function createSizedArray(len) {
 function createNS(type) {
   // return {appendChild:function(){},setAttribute:function(){},style:{}}
   return document.createElementNS(svgNS, type);
-}
-
-/* exported createTag */
-
-function createTag(type) {
-  // return {appendChild:function(){},setAttribute:function(){},style:{}}
-  return document.createElement(type);
 }
 
 function DynamicPropertyContainer() {}
@@ -1518,7 +1403,6 @@ var bez = bezFunction();
 /* exported dataManager */
 
 function dataFunctionManager() {
-  // var tCanvasHelper = createTag('canvas').getContext('2d');
 
   function completeLayers(layers, comps) {
     var layerData;
@@ -4587,7 +4471,6 @@ BaseRenderer.prototype.searchExtraCompositions = function (assets) {
 
 BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
   this.globalData.getAssetData = this.animationItem.getAssetData.bind(this.animationItem);
-  this.globalData.getAssetsPath = this.animationItem.getAssetsPath.bind(this.animationItem);
   this.globalData.frameId = 0;
   this.globalData.frameRate = animData.fr;
   this.globalData.nm = animData.nm;
@@ -5382,8 +5265,7 @@ var SVGElementsRenderer = (function () {
         return renderFill;
       case 'gf':
         return renderGradient;
-      case 'gs':
-        return renderGradientStroke;
+      case 'gs':;
       case 'st':
         return renderStroke;
       case 'sh':
@@ -5475,10 +5357,7 @@ var SVGElementsRenderer = (function () {
     }
   }
 
-  function renderGradientStroke(styleData, itemData, isFirstFrame) {
-    renderGradient(styleData, itemData, isFirstFrame);
-    renderStroke(styleData, itemData, isFirstFrame);
-  }
+
 
   function renderGradient(styleData, itemData, isFirstFrame) {
     var gfill = itemData.gf;
@@ -6182,11 +6061,6 @@ SVGShapeElement.prototype.createStyleElement = function (data, level) {
     var GradientConstructor = data.ty === 'gf' ? SVGGradientFillStyleData : SVGGradientStrokeStyleData;
     elementData = new GradientConstructor(this, data, styleOb);
     this.globalData.defs.appendChild(elementData.gf);
-    if (elementData.maskId) {
-      this.globalData.defs.appendChild(elementData.ms);
-      this.globalData.defs.appendChild(elementData.of);
-      pathElement.setAttribute('mask', 'url(' + locationHref + '#' + elementData.maskId + ')');
-    }
   }
 
   if (data.ty === 'st' || data.ty === 'gs') {
@@ -7098,12 +6972,10 @@ var AnimationItem = function () {
   this.playDirection = 1;
   this.playCount = 0;
   this.animationData = {};
-  this.assets = [];
  
   this.loop = true;
   this.renderer = null;
   this.animationID = createElementID();
-  this.assetsPath = '';
   this.timeCompleted = 0;
   this.segmentPos = 0;
   this.isSubframeEnabled = subframeEnabled;
@@ -7120,31 +6992,13 @@ AnimationItem.prototype.setParams = function (params) {
   if (params.wrapper || params.container) {
     this.wrapper = params.wrapper || params.container;
   }
-  var animType = 'svg';
-  if (params.animType) {
-    animType = params.animType;
-  } else if (params.renderer) {
-    animType = params.renderer;
-  }
-
-    this.renderer = new SVGRenderer(this, params.rendererSettings);
+  this.renderer = new SVGRenderer(this, params.rendererSettings);
 
   this.renderer.setProjectInterface(this.projectInterface);
-  this.animType = animType;
-  if (params.loop === ''
-        || params.loop === null
-        || params.loop === undefined
-        || params.loop === true) {
-    this.loop = true;
-  } else if (params.loop === false) {
-    this.loop = false;
-  } else {
-    this.loop = parseInt(params.loop, 10);
-  }
-
+  this.animType = 'svg';
+  this.loop = true;
   this.name = params.name ? params.name : '';
   this.autoloadSegments = Object.prototype.hasOwnProperty.call(params, 'autoloadSegments') ? params.autoloadSegments : true;
-  this.assetsPath = params.assetsPath;
   this.initialSegment = params.initialSegment;
   this.configAnimation(params.animationData);
   
@@ -7512,17 +7366,7 @@ AnimationItem.prototype.getPath = function () {
   return this.path;
 };
 
-AnimationItem.prototype.getAssetsPath = function (assetData) {
-  var path = '';
-  if (assetData.e) {
-    path = assetData.p;
-  } else {
-    path = this.path;
-    path += assetData.u ? assetData.u : '';
-    path += assetData.p;
-  }
-  return path;
-};
+
 
 AnimationItem.prototype.getAssetData = function (id) {
   var i = 0;
