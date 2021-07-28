@@ -5540,7 +5540,7 @@ ShapeTransformManager.prototype = {
 };
 
 /* global LayerExpressionInterface, EffectsExpressionInterface, CompExpressionInterface, ShapeExpressionInterface,
-TextExpressionInterface, getBlendMode,createElementID, EffectsManager */
+TextExpressionInterface, getBlendMode,createElementID */
 
 function BaseElement() {
 }
@@ -5574,8 +5574,7 @@ BaseElement.prototype = {
     if (!this.data.sr) {
       this.data.sr = 1;
     }
-    // effects manager
-    this.effectsManager = new EffectsManager(this.data, this, this.dynamicProperties);
+    
   },
   getType: function () {
     return this.type;
@@ -5752,7 +5751,7 @@ SVGBaseElement.prototype = {
     return this.baseElement;
   },
   createRenderableComponents: function () {
-    this.renderableEffectsManager = new SVGEffects(this);
+    
   },
   setMatte: function (id) {
     if (!this.matteElement) {
@@ -5786,25 +5785,26 @@ IShapeElement.prototype = {
     return false;
   },
   renderModifiers: function () {
-    if (!this.shapeModifiers.length) {
-      return;
-    }
-    var i;
-    var len = this.shapes.length;
-    for (i = 0; i < len; i += 1) {
-      this.shapes[i].sh.reset();
-    }
+    // if (!this.shapeModifiers.length) {
+    //   return;
+    // }
+    // var i;
+    // var len = this.shapes.length;
+    // for (i = 0; i < len; i += 1) {
+    //   this.shapes[i].sh.reset();
+    // }
 
-    len = this.shapeModifiers.length;
-    var shouldBreakProcess;
-    for (i = len - 1; i >= 0; i -= 1) {
-      shouldBreakProcess = this.shapeModifiers[i].processShapes(this._isFirstFrame);
-      // workaround to fix cases where a repeater resets the shape so the following processes get called twice
-      // TODO: find a better solution for this
-      if (shouldBreakProcess) {
-        break;
-      }
-    }
+    // len = this.shapeModifiers.length;
+    // var shouldBreakProcess;
+    // for (i = len - 1; i >= 0; i -= 1) {
+    //   shouldBreakProcess = this.shapeModifiers[i].processShapes(this._isFirstFrame);
+    //   // workaround to fix cases where a repeater resets the shape so the following processes get called twice
+    //   // TODO: find a better solution for this
+    //   if (shouldBreakProcess) {
+    //     console.log("")
+    //     break;
+    //   }
+    // }
   },
   lcEnum: {
     1: 'butt',
@@ -6168,7 +6168,7 @@ SVGShapeElement.prototype.reloadShapes = function () {
   for (i = 0; i < len; i += 1) {
     this.dynamicProperties[i].getValue();
   }
-  this.renderModifiers();
+  // this.renderModifiers();
 };
 
 SVGShapeElement.prototype.searchShapes = function (arr, itemsData, prevViewData, container, level, transformers, render) {
@@ -7449,11 +7449,6 @@ AnimationItem.prototype.triggerConfigError = function (nativeError) {
   }
 };
 
-/* exported EffectsManager */
-
-function EffectsManager() {
-  this.effectElements = [];
-}
 
 
 var lottie = {};
@@ -7524,7 +7519,6 @@ lottie.setLocationHref = setLocationHref;
 lottie.loadAnimation = loadAnimation;
 lottie.setSubframeRendering = setSubframeRendering;
 lottie.resize = animationManager.resize;
-// lottie.start = start;
 
 lottie.destroy = animationManager.destroy;
 lottie.setQuality = setQuality;
