@@ -6992,32 +6992,6 @@ var animationManager = (function () {
     }
   }
 
-  function registerAnimation(element, animationData) {
-    if (!element) {
-      return null;
-    }
-    var i = 0;
-    while (i < len) {
-      if (registeredAnimations[i].elem === element && registeredAnimations[i].elem !== null) {
-        return registeredAnimations[i].animation;
-      }
-      i += 1;
-    }
-    var animItem = new AnimationItem();
-    setupAnimation(animItem, element);
-    animItem.setData(element, animationData);
-    return animItem;
-  }
-
-  function getRegisteredAnimations() {
-    var i;
-    var lenAnims = registeredAnimations.length;
-    var animations = [];
-    for (i = 0; i < lenAnims; i += 1) {
-      animations.push(registeredAnimations[i].animation);
-    }
-    return animations;
-  }
 
   function addPlayingCount() {
     playingAnimationsNum += 1;
@@ -7043,19 +7017,6 @@ var animationManager = (function () {
     return animItem;
   }
 
-  function setSpeed(val, animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.setSpeed(val, animation);
-    }
-  }
-
-  function setDirection(val, animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.setDirection(val, animation);
-    }
-  }
 
   function play(animation) {
     var i;
@@ -7117,32 +7078,6 @@ var animationManager = (function () {
     }
   }
 
-  function searchAnimations(animationData, standalone, renderer) {
-    var animElements = [].concat([].slice.call(document.getElementsByClassName('lottie')),
-      [].slice.call(document.getElementsByClassName('bodymovin')));
-    var i;
-    var lenAnims = animElements.length;
-    for (i = 0; i < lenAnims; i += 1) {
-      if (renderer) {
-        animElements[i].setAttribute('data-bm-type', renderer);
-      }
-      registerAnimation(animElements[i], animationData);
-    }
-    if (standalone && lenAnims === 0) {
-      if (!renderer) {
-        renderer = 'svg';
-      }
-      var body = document.getElementsByTagName('body')[0];
-      body.innerText = '';
-      var div = createTag('div');
-      div.style.width = '100%';
-      div.style.height = '100%';
-      div.setAttribute('data-bm-type', renderer);
-      body.appendChild(div);
-      registerAnimation(div, animationData);
-    }
-  }
-
   function resize() {
     var i;
     for (i = 0; i < len; i += 1) {
@@ -7168,46 +7103,17 @@ var animationManager = (function () {
     activate();
   }
 
-  function setVolume(val, animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.setVolume(val, animation);
-    }
-  }
-
-  function mute(animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.mute(animation);
-    }
-  }
-
-  function unmute(animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.unmute(animation);
-    }
-  }
-
-  moduleOb.registerAnimation = registerAnimation;
   moduleOb.loadAnimation = loadAnimation;
-  moduleOb.setSpeed = setSpeed;
-  moduleOb.setDirection = setDirection;
   moduleOb.play = play;
   moduleOb.pause = pause;
   moduleOb.stop = stop;
   moduleOb.togglePause = togglePause;
-  moduleOb.searchAnimations = searchAnimations;
   moduleOb.resize = resize;
   // moduleOb.start = start;
   moduleOb.goToAndStop = goToAndStop;
   moduleOb.destroy = destroy;
   moduleOb.freeze = freeze;
   moduleOb.unfreeze = unfreeze;
-  moduleOb.setVolume = setVolume;
-  moduleOb.mute = mute;
-  moduleOb.unmute = unmute;
-  moduleOb.getRegisteredAnimations = getRegisteredAnimations;
   return moduleOb;
 }());
 
@@ -7649,25 +7555,11 @@ AnimationItem.prototype.advanceTime = function (value) {
 AnimationItem.prototype.adjustSegment = function (arr, offset) {
   this.playCount = 0;
   if (arr[1] < arr[0]) {
-    if (this.frameModifier > 0) {
-      if (this.playSpeed < 0) {
-        this.setSpeed(-this.playSpeed);
-      } else {
-        this.setDirection(-1);
-      }
-    }
     this.totalFrames = arr[0] - arr[1];
     this.timeCompleted = this.totalFrames;
     this.firstFrame = arr[1];
     this.setCurrentRawFrameValue(this.totalFrames - 0.001 - offset);
   } else if (arr[1] > arr[0]) {
-    if (this.frameModifier < 0) {
-      if (this.playSpeed < 0) {
-        this.setSpeed(-this.playSpeed);
-      } else {
-        this.setDirection(1);
-      }
-    }
     this.totalFrames = arr[1] - arr[0];
     this.timeCompleted = this.totalFrames;
     this.firstFrame = arr[0];
@@ -7750,16 +7642,6 @@ AnimationItem.prototype.destroy = function (name) {
 AnimationItem.prototype.setCurrentRawFrameValue = function (value) {
   this.currentRawFrame = value;
   this.gotoFrame();
-};
-
-AnimationItem.prototype.setSpeed = function (val) {
-  this.playSpeed = val;
-  this.updaFrameModifier();
-};
-
-AnimationItem.prototype.setDirection = function (val) {
-  this.playDirection = val < 0 ? -1 : 1;
-  this.updaFrameModifier();
 };
 
 AnimationItem.prototype.updaFrameModifier = function () {
@@ -7877,14 +7759,6 @@ function setLocationHref(href) {
   locationHref = href;
 }
 
-function searchAnimations() {
-  if (standalone === true) {
-    animationManager.searchAnimations(animationData, standalone, renderer);
-  } else {
-    animationManager.searchAnimations();
-  }
-}
-
 function setSubframeRendering(flag) {
   subframeEnabled = flag;
 }
@@ -7945,11 +7819,7 @@ lottie.play = animationManager.play;
 lottie.pause = animationManager.pause;
 lottie.setLocationHref = setLocationHref;
 lottie.togglePause = animationManager.togglePause;
-lottie.setSpeed = animationManager.setSpeed;
-lottie.setDirection = animationManager.setDirection;
 lottie.stop = animationManager.stop;
-lottie.searchAnimations = searchAnimations;
-lottie.registerAnimation = animationManager.registerAnimation;
 lottie.loadAnimation = loadAnimation;
 lottie.setSubframeRendering = setSubframeRendering;
 lottie.resize = animationManager.resize;
@@ -7960,10 +7830,6 @@ lottie.setQuality = setQuality;
 lottie.inBrowser = inBrowser;
 lottie.freeze = animationManager.freeze;
 lottie.unfreeze = animationManager.unfreeze;
-lottie.setVolume = animationManager.setVolume;
-lottie.mute = animationManager.mute;
-lottie.unmute = animationManager.unmute;
-lottie.getRegisteredAnimations = animationManager.getRegisteredAnimations;
 lottie.setIDPrefix = setIDPrefix;
 lottie.__getFactory = getFactory;
 lottie.version = '5.7.11';
@@ -7971,7 +7837,6 @@ lottie.version = '5.7.11';
 function checkReady() {
   if (document.readyState === 'complete') {
     clearInterval(readyStateCheckInterval);
-    searchAnimations();
   }
 }
 

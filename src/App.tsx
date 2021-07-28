@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import Lottie from './lottie-web-master/build/player/lottie_light.js'
-import animation from './layerEffetcs.json'; 
+import animation from './hot-dog-jump.json'; 
 
 function App() {
   return (
