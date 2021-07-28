@@ -1,12 +1,12 @@
 import React from 'react';
 import './App.css';
 import Lottie from './lottie-web-master/build/player/lottie_light.js'
-import hotdogAnimation from './hot-dog-jump.json'; 
+import animation from './mask.json'; 
 
 function App() {
   return (
     <div className="App">
-     <LottieLoader json={hotdogAnimation} />
+     <LottieLoader json={animation} />
     </div>
   );
 }
