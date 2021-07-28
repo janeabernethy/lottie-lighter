@@ -4236,54 +4236,6 @@ var filtersFactory = (function () {
 
   return ob;
 }());
-
-/* exported assetLoader */
-
-var assetLoader = (function () {
-  function formatResponse(xhr) {
-    if (xhr.response && typeof xhr.response === 'object') {
-      return xhr.response;
-    } if (xhr.response && typeof xhr.response === 'string') {
-      return JSON.parse(xhr.response);
-    } if (xhr.responseText) {
-      return JSON.parse(xhr.responseText);
-    }
-    return null;
-  }
-
-  function loadAsset(path, callback, errorCallback) {
-    var response;
-    var xhr = new XMLHttpRequest();
-    // set responseType after calling open or IE will break.
-    try {
-      // This crashes on Android WebView prior to KitKat
-      xhr.responseType = 'json';
-    } catch (err) {} // eslint-disable-line no-empty
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          response = formatResponse(xhr);
-          callback(response);
-        } else {
-          try {
-            response = formatResponse(xhr);
-            callback(response);
-          } catch (err) {
-            if (errorCallback) {
-              errorCallback(err);
-            }
-          }
-        }
-      }
-    };
-    xhr.open('GET', path, true);
-    xhr.send();
-  }
-  return {
-    load: loadAsset,
-  };
-}());
-
 /* global createSizedArray, pooling */
 /* exported poolFactory */
 
@@ -7260,7 +7212,7 @@ var animationManager = (function () {
 }());
 
 /* global createElementID, subframeEnabled, ProjectInterface, extendPrototype, BaseEvent,
-CanvasRenderer, SVGRenderer, HybridRenderer, assetLoader, dataManager, expressionsPlugin, BMEnterFrameEvent, BMCompleteLoopEvent,
+CanvasRenderer, SVGRenderer, HybridRenderer, dataManager, expressionsPlugin, BMEnterFrameEvent, BMCompleteLoopEvent,
 BMCompleteEvent, BMSegmentStartEvent, BMDestroyEvent, BMEnterFrameEvent, BMCompleteLoopEvent, BMCompleteEvent, BMSegmentStartEvent,
 BMDestroyEvent, BMRenderFrameErrorEvent, BMConfigErrorEvent, markerParser */
 
@@ -7336,22 +7288,8 @@ AnimationItem.prototype.setParams = function (params) {
   this.autoloadSegments = Object.prototype.hasOwnProperty.call(params, 'autoloadSegments') ? params.autoloadSegments : true;
   this.assetsPath = params.assetsPath;
   this.initialSegment = params.initialSegment;
-
-  if (params.animationData) {
-    this.configAnimation(params.animationData);
-  } else if (params.path) {
-    if (params.path.lastIndexOf('\\') !== -1) {
-      this.path = params.path.substr(0, params.path.lastIndexOf('\\') + 1);
-    } else {
-      this.path = params.path.substr(0, params.path.lastIndexOf('/') + 1);
-    }
-    this.fileName = params.path.substr(params.path.lastIndexOf('/') + 1);
-    this.fileName = this.fileName.substr(0, this.fileName.lastIndexOf('.json'));
-
-    assetLoader.load(params.path, this.configAnimation.bind(this), function () {
-      this.trigger('data_failed');
-    }.bind(this));
-  }
+  this.configAnimation(params.animationData);
+  
 };
 
 AnimationItem.prototype.setData = function (wrapper, animationData) {

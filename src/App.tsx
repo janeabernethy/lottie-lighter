@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import Lottie from './lottie-web-master/build/player/lottie_light.js'
-import animation from './mask.json'; 
+import animation from './hot-dog-jump.json'; 
 
 function App() {
   return (
@@ -21,6 +21,7 @@ export const LottieLoader = React.memo(({json}: LottieProps ) => {
   React.useEffect(() => {
     if(element.current)
      Lottie.loadAnimation({
+      //  path: "https://assets6.lottiefiles.com/temp/lf20_6bhHgV.json",
          animationData: json,
          container: element.current,
          renderer: 'svg', 
