@@ -13,8 +13,8 @@
     }
 }((window || {}), function(window) {
 	/* global locationHref:writable, animationManager, subframeEnabled:writable, defaultCurveSegments:writable, roundValues,
-expressionsPlugin:writable, PropertyFactory, ShapePropertyFactory, Matrix, idPrefix:writable */
-/* exported locationHref, subframeEnabled, expressionsPlugin, idPrefix */
+:writable, PropertyFactory, ShapePropertyFactory, Matrix, idPrefix:writable */
+/* exported locationHref, subframeEnabled, idPrefix */
 
 'use strict';
 
@@ -27,14 +27,13 @@ var locationHref = '';
 var initialDefaultFrame = -999999;
 
 /* global createSizedArray */
-/* exported subframeEnabled, expressionsPlugin, isSafari, cachedColors, bmPow, bmSqrt, bmFloor, bmMax, bmMin, ProjectInterface,
+/* exported subframeEnabled, isSafari, cachedColors, bmPow, bmSqrt, bmFloor, bmMax, bmMin, ProjectInterface,
 defaultCurveSegments, degToRads, roundCorner, bmRnd, styleDiv, BMEnterFrameEvent, BMCompleteEvent, BMCompleteLoopEvent,
 BMSegmentStartEvent, BMDestroyEvent, BMRenderFrameErrorEvent, BMConfigErrorEvent, BMAnimationConfigErrorEvent, createElementID,
 addSaturationToRGB, addBrightnessToRGB, addHueToRGB, rgbToHex */
 
 var subframeEnabled = true;
 var idPrefix = '';
-var expressionsPlugin;
 var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 var cachedColors = {};
 var bmRnd;
@@ -4598,7 +4597,7 @@ BaseRenderer.prototype.setupGlobalData = function (animData, fontsContainer) {
   };
 };
 
-/* global createElementID, extendPrototype, BaseRenderer, NullElement, SVGShapeElement, SVGCompElement, createNS, locationHref, createSizedArray, expressionsPlugin */
+/* global createElementID, extendPrototype, BaseRenderer, NullElement, SVGShapeElement, SVGCompElement, createNS, locationHref, createSizedArray, */
 
 function SVGRenderer(animationItem, config) {
   this.animationItem = animationItem;
@@ -4755,12 +4754,6 @@ SVGRenderer.prototype.buildItem = function (pos) {
   var element = this.createItem(this.layers[pos]);
 
   elements[pos] = element;
-  if (expressionsPlugin) {
-    if (this.layers[pos].ty === 0) {
-      this.globalData.projectInterface.registerComposition(element);
-    }
-    element.initExpressions();
-  }
   this.appendElementInPos(element, pos);
   if (this.layers[pos].tt) {
     if (!this.elements[pos - 1] || this.elements[pos - 1] === true) {
@@ -6984,9 +6977,7 @@ var animationManager = (function () {
         registeredAnimations.splice(i, 1);
         i -= 1;
         len -= 1;
-        if (!animItem.isPaused) {
-          subtractPlayingCount();
-        }
+        subtractPlayingCount();
       }
       i += 1;
     }
@@ -7043,33 +7034,6 @@ var animationManager = (function () {
     window.requestAnimationFrame(resume);
   }
 
-  function pause(animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.pause(animation);
-    }
-  }
-
-  function goToAndStop(value, isFrame, animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.goToAndStop(value, isFrame, animation);
-    }
-  }
-
-  function stop(animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.stop(animation);
-    }
-  }
-
-  function togglePause(animation) {
-    var i;
-    for (i = 0; i < len; i += 1) {
-      registeredAnimations[i].animation.togglePause(animation);
-    }
-  }
 
   function destroy(animation) {
     var i;
@@ -7105,12 +7069,9 @@ var animationManager = (function () {
 
   moduleOb.loadAnimation = loadAnimation;
   moduleOb.play = play;
-  moduleOb.pause = pause;
   moduleOb.stop = stop;
-  moduleOb.togglePause = togglePause;
   moduleOb.resize = resize;
   // moduleOb.start = start;
-  moduleOb.goToAndStop = goToAndStop;
   moduleOb.destroy = destroy;
   moduleOb.freeze = freeze;
   moduleOb.unfreeze = unfreeze;
@@ -7118,7 +7079,7 @@ var animationManager = (function () {
 }());
 
 /* global createElementID, subframeEnabled, ProjectInterface, extendPrototype, BaseEvent,
-CanvasRenderer, SVGRenderer, HybridRenderer, dataManager, expressionsPlugin, BMEnterFrameEvent, BMCompleteLoopEvent,
+CanvasRenderer, SVGRenderer, HybridRenderer, dataManager, BMEnterFrameEvent, BMCompleteLoopEvent,
 BMCompleteEvent, BMSegmentStartEvent, BMDestroyEvent, BMEnterFrameEvent, BMCompleteLoopEvent, BMCompleteEvent, BMSegmentStartEvent,
 BMDestroyEvent, BMRenderFrameErrorEvent, BMConfigErrorEvent, markerParser */
 
@@ -7138,8 +7099,7 @@ var AnimationItem = function () {
   this.playCount = 0;
   this.animationData = {};
   this.assets = [];
-  this.isPaused = true;
-  this.autoplay = false;
+ 
   this.loop = true;
   this.renderer = null;
   this.animationID = createElementID();
@@ -7181,7 +7141,7 @@ AnimationItem.prototype.setParams = function (params) {
   } else {
     this.loop = parseInt(params.loop, 10);
   }
-  this.autoplay = 'autoplay' in params ? params.autoplay : true;
+
   this.name = params.name ? params.name : '';
   this.autoloadSegments = Object.prototype.hasOwnProperty.call(params, 'autoloadSegments') ? params.autoloadSegments : true;
   this.assetsPath = params.assetsPath;
@@ -7235,14 +7195,7 @@ AnimationItem.prototype.setData = function (wrapper, animationData) {
   } else if (loop !== '') {
     params.loop = parseInt(loop, 10);
   }
-  var autoplay = wrapperAttributes.getNamedItem('data-anim-autoplay') // eslint-disable-line no-nested-ternary
-    ? wrapperAttributes.getNamedItem('data-anim-autoplay').value
-    : wrapperAttributes.getNamedItem('data-bm-autoplay') // eslint-disable-line no-nested-ternary
-      ? wrapperAttributes.getNamedItem('data-bm-autoplay').value
-      : wrapperAttributes.getNamedItem('bm-autoplay')
-        ? wrapperAttributes.getNamedItem('bm-autoplay').value
-        : true;
-  params.autoplay = autoplay !== 'false';
+
 
   params.name = wrapperAttributes.getNamedItem('data-name') // eslint-disable-line no-nested-ternary
     ? wrapperAttributes.getNamedItem('data-name').value
@@ -7295,9 +7248,6 @@ AnimationItem.prototype.includeLayers = function (data) {
   this.animationData.__complete = false;
   dataManager.completeData(this.animationData);
   this.renderer.includeLayers(data.layers);
-  if (expressionsPlugin) {
-    expressionsPlugin.initExpressions(this);
-  }
   this.loadNextSegment();
 };
 
@@ -7365,17 +7315,12 @@ AnimationItem.prototype.checkLoaded = function () {
   if (!this.isLoaded) {
     this.isLoaded = true;
     dataManager.completeData(this.animationData);
-    if (expressionsPlugin) {
-      expressionsPlugin.initExpressions(this);
-    }
     this.renderer.initItems();
     setTimeout(function () {
       this.trigger('DOMLoaded');
     }.bind(this), 0);
     this.gotoFrame();
-    if (this.autoplay) {
-      this.play();
-    }
+    this.play();
   }
 };
 
@@ -7412,48 +7357,10 @@ AnimationItem.prototype.play = function (name) {
   if (name && this.name !== name) {
     return;
   }
-  if (this.isPaused === true) {
-    this.isPaused = false;
+  this.trigger('_active');
 
-    if (this._idle) {
-      this._idle = false;
-      this.trigger('_active');
-    }
-  }
 };
 
-AnimationItem.prototype.pause = function (name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  if (this.isPaused === false) {
-    this.isPaused = true;
-    this._idle = true;
-    this.trigger('_idle');
-
-  }
-};
-
-AnimationItem.prototype.togglePause = function (name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  if (this.isPaused === true) {
-    this.play();
-  } else {
-    this.pause();
-  }
-};
-
-AnimationItem.prototype.stop = function (name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  this.pause();
-  this.playCount = 0;
-  this._completedLoop = false;
-  this.setCurrentRawFrameValue(0);
-};
 
 AnimationItem.prototype.getMarkerData = function (markerName) {
   var marker;
@@ -7466,46 +7373,10 @@ AnimationItem.prototype.getMarkerData = function (markerName) {
   return null;
 };
 
-AnimationItem.prototype.goToAndStop = function (value, isFrame, name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  var numValue = Number(value);
-  if (isNaN(numValue)) {
-    var marker = this.getMarkerData(value);
-    if (marker) {
-      this.goToAndStop(marker.time, true);
-    }
-  } else if (isFrame) {
-    this.setCurrentRawFrameValue(value);
-  } else {
-    this.setCurrentRawFrameValue(value * this.frameModifier);
-  }
-  this.pause();
-};
 
-AnimationItem.prototype.goToAndPlay = function (value, isFrame, name) {
-  if (name && this.name !== name) {
-    return;
-  }
-  var numValue = Number(value);
-  if (isNaN(numValue)) {
-    var marker = this.getMarkerData(value);
-    if (marker) {
-      if (!marker.duration) {
-        this.goToAndStop(marker.time, true);
-      } else {
-        this.playSegments([marker.time, marker.time + marker.duration], true);
-      }
-    }
-  } else {
-    this.goToAndStop(numValue, isFrame, name);
-  }
-  this.play();
-};
 
 AnimationItem.prototype.advanceTime = function (value) {
-  if (this.isPaused === true || this.isLoaded === false) {
+  if (this.isLoaded === false) {
     return;
   }
   var nextValue = this.currentRawFrame + value * this.frameModifier;
@@ -7546,8 +7417,7 @@ AnimationItem.prototype.advanceTime = function (value) {
     this.setCurrentRawFrameValue(nextValue);
   }
   if (_isComplete) {
-    this.setCurrentRawFrameValue(nextValue);
-    this.pause();
+    this.setCurrentRawFrameValue(nextValue);;
     this.trigger('complete');
   }
 };
@@ -7569,20 +7439,11 @@ AnimationItem.prototype.adjustSegment = function (arr, offset) {
 };
 AnimationItem.prototype.setSegment = function (init, end) {
   var pendingFrame = -1;
-  if (this.isPaused) {
-    if (this.currentRawFrame + this.firstFrame < init) {
-      pendingFrame = init;
-    } else if (this.currentRawFrame + this.firstFrame > end) {
-      pendingFrame = end - init;
-    }
-  }
+
 
   this.firstFrame = init;
   this.totalFrames = end - init;
   this.timeCompleted = this.totalFrames;
-  if (pendingFrame !== -1) {
-    this.goToAndStop(pendingFrame, true);
-  }
 };
 
 AnimationItem.prototype.playSegments = function (arr, forceFlag) {
@@ -7601,9 +7462,8 @@ AnimationItem.prototype.playSegments = function (arr, forceFlag) {
   if (this.segments.length && forceFlag) {
     this.adjustSegment(this.segments.shift(), 0);
   }
-  if (this.isPaused) {
+ 
     this.play();
-  }
 };
 
 AnimationItem.prototype.resetSegments = function (forceFlag) {
@@ -7634,7 +7494,6 @@ AnimationItem.prototype.destroy = function (name) {
   this.onComplete = null;
   this.onSegmentStart = null;
   this.onDestroy = null;
-  this.renderer = null;
   this.renderer = null;
   this.projectInterface = null;
 };
@@ -7809,6 +7668,7 @@ function getFactory(name) {
     case 'shapePropertyFactory':
       return ShapePropertyFactory;
     case 'matrix':
+      console.log("In the Matrix")
       return Matrix;
     default:
       return null;
@@ -7816,22 +7676,18 @@ function getFactory(name) {
 }
 
 lottie.play = animationManager.play;
-lottie.pause = animationManager.pause;
 lottie.setLocationHref = setLocationHref;
-lottie.togglePause = animationManager.togglePause;
-lottie.stop = animationManager.stop;
 lottie.loadAnimation = loadAnimation;
 lottie.setSubframeRendering = setSubframeRendering;
 lottie.resize = animationManager.resize;
 // lottie.start = start;
-lottie.goToAndStop = animationManager.goToAndStop;
+
 lottie.destroy = animationManager.destroy;
 lottie.setQuality = setQuality;
 lottie.inBrowser = inBrowser;
 lottie.freeze = animationManager.freeze;
 lottie.unfreeze = animationManager.unfreeze;
 lottie.setIDPrefix = setIDPrefix;
-lottie.__getFactory = getFactory;
 lottie.version = '5.7.11';
 
 function checkReady() {
