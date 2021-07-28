@@ -7260,17 +7260,9 @@ AnimationItem.prototype.setParams = function (params) {
   } else if (params.renderer) {
     animType = params.renderer;
   }
-  switch (animType) {
-    case 'canvas':
-      this.renderer = new CanvasRenderer(this, params.rendererSettings);
-      break;
-    case 'svg':
-      this.renderer = new SVGRenderer(this, params.rendererSettings);
-      break;
-    default:
-      this.renderer = new HybridRenderer(this, params.rendererSettings);
-      break;
-  }
+
+    this.renderer = new SVGRenderer(this, params.rendererSettings);
+
   this.renderer.setProjectInterface(this.projectInterface);
   this.animType = animType;
   if (params.loop === ''
@@ -7464,11 +7456,7 @@ AnimationItem.prototype.configAnimation = function (animData) {
 
 
 AnimationItem.prototype.checkLoaded = function () {
-  if (!this.isLoaded
-
-        && (this.renderer.rendererType !== 'canvas')
-       
-  ) {
+  if (!this.isLoaded) {
     this.isLoaded = true;
     dataManager.completeData(this.animationData);
     if (expressionsPlugin) {
