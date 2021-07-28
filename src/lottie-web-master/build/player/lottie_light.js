@@ -1853,7 +1853,7 @@ function dataFunctionManager() {
     };
   }());
 
-  function completeData(animationData, fontManager) {
+  function completeData(animationData) {
     if (animationData.__complete) {
       return;
     }
@@ -1861,7 +1861,7 @@ function dataFunctionManager() {
     checkText(animationData);
     checkChars(animationData);
     checkShapes(animationData);
-    completeLayers(animationData.layers, animationData.assets, fontManager);
+    completeLayers(animationData.layers, animationData.assets);
     animationData.__complete = true;
   }
 
@@ -1933,37 +1933,7 @@ var FontManager = (function () {
   
 
   function checkLoadedFonts() {
-    var i;
-    var len = this.fonts.length;
-    var node;
-    var w;
-    var loadedCount = len;
-    for (i = 0; i < len; i += 1) {
-      if (this.fonts[i].loaded) {
-        loadedCount -= 1;
-      } else if (this.fonts[i].fOrigin === 'n' || this.fonts[i].origin === 0) {
-        this.fonts[i].loaded = true;
-      } else {
-        node = this.fonts[i].monoCase.node;
-        w = this.fonts[i].monoCase.w;
-        if (node.offsetWidth !== w) {
-          loadedCount -= 1;
-          this.fonts[i].loaded = true;
-        } else {
-          node = this.fonts[i].sansCase.node;
-          w = this.fonts[i].sansCase.w;
-          if (node.offsetWidth !== w) {
-            loadedCount -= 1;
-            this.fonts[i].loaded = true;
-          }
-        }
-        if (this.fonts[i].loaded) {
-          this.fonts[i].sansCase.parent.parentNode.removeChild(this.fonts[i].sansCase.parent);
-          this.fonts[i].monoCase.parent.parentNode.removeChild(this.fonts[i].monoCase.parent);
-        }
-      }
-    }
-
+  
     if (loadedCount !== 0 && Date.now() - this.initTime < maxWaitingTime) {
       setTimeout(this.checkLoadedFontsBinded, 20);
     } else {
@@ -2185,7 +2155,6 @@ var FontManager = (function () {
     this._warned = false;
     this.initTime = Date.now();
     this.setIsLoadedBinded = this.setIsLoaded.bind(this);
-    this.checkLoadedFontsBinded = this.checkLoadedFonts.bind(this);
   };
     // TODO: for now I'm adding these methods to the Class and not the prototype. Think of a better way to implement it.
   Font.getCombinedCharacterCodes = getCombinedCharacterCodes;
@@ -9351,10 +9320,6 @@ AnimationItem.prototype.includeLayers = function (data) {
       i += 1;
     }
   }
-  if (data.chars || data.fonts) {
-    this.renderer.globalData.fontManager.addChars(data.chars);
-    this.renderer.globalData.fontManager.addFonts(data.fonts, this.renderer.globalData.defs);
-  }
   if (data.assets) {
     len = data.assets.length;
     for (i = 0; i < len; i += 1) {
@@ -9362,7 +9327,7 @@ AnimationItem.prototype.includeLayers = function (data) {
     }
   }
   this.animationData.__complete = false;
-  dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
+  dataManager.completeData(this.animationData);
   this.renderer.includeLayers(data.layers);
   if (expressionsPlugin) {
     expressionsPlugin.initExpressions(this);
@@ -9422,32 +9387,22 @@ AnimationItem.prototype.configAnimation = function (animData) {
     this.trigger('config_ready');
     this.loadSegments();
     this.updaFrameModifier();
-    this.waitForFontsLoaded();
+    this.checkLoaded();
    
   } catch (error) {
     this.triggerConfigError(error);
   }
 };
 
-AnimationItem.prototype.waitForFontsLoaded = function () {
-  if (!this.renderer) {
-    return;
-  }
-  if (this.renderer.globalData.fontManager.isLoaded) {
-    this.checkLoaded();
-  } else {
-    setTimeout(this.waitForFontsLoaded.bind(this), 20);
-  }
-};
 
 AnimationItem.prototype.checkLoaded = function () {
   if (!this.isLoaded
-        && this.renderer.globalData.fontManager.isLoaded
+
         && (this.renderer.rendererType !== 'canvas')
        
   ) {
     this.isLoaded = true;
-    dataManager.completeData(this.animationData, this.renderer.globalData.fontManager);
+    dataManager.completeData(this.animationData);
     if (expressionsPlugin) {
       expressionsPlugin.initExpressions(this);
     }
