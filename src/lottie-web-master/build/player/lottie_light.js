@@ -1930,58 +1930,7 @@ function getFontProperties(fontData) {
 /* exported FontManager */
 
 var FontManager = (function () {
-  var maxWaitingTime = 5000;
-  var emptyChar = {
-    w: 0,
-    size: 0,
-    shapes: [],
-  };
-  var combinedCharacters = [];
-  // Hindi characters
-  combinedCharacters = combinedCharacters.concat([2304, 2305, 2306, 2307, 2362, 2363, 2364, 2364, 2366,
-    2367, 2368, 2369, 2370, 2371, 2372, 2373, 2374, 2375, 2376, 2377, 2378, 2379,
-    2380, 2381, 2382, 2383, 2387, 2388, 2389, 2390, 2391, 2402, 2403]);
-
-  function trimFontOptions(font) {
-    var familyArray = font.split(',');
-    var i;
-    var len = familyArray.length;
-    var enabledFamilies = [];
-    for (i = 0; i < len; i += 1) {
-      if (familyArray[i] !== 'sans-serif' && familyArray[i] !== 'monospace') {
-        enabledFamilies.push(familyArray[i]);
-      }
-    }
-    return enabledFamilies.join(',');
-  }
-
-  function setUpNode(font, family) {
-    var parentNode = createTag('span');
-    // Node is invisible to screen readers.
-    parentNode.setAttribute('aria-hidden', true);
-    parentNode.style.fontFamily = family;
-    var node = createTag('span');
-    // Characters that vary significantly among different fonts
-    node.innerText = 'giItT1WQy@!-/#';
-    // Visible - so we can measure it - but not on the screen
-    parentNode.style.position = 'absolute';
-    parentNode.style.left = '-10000px';
-    parentNode.style.top = '-10000px';
-    // Large font size makes even subtle changes obvious
-    parentNode.style.fontSize = '300px';
-    // Reset any font properties
-    parentNode.style.fontVariant = 'normal';
-    parentNode.style.fontStyle = 'normal';
-    parentNode.style.fontWeight = 'normal';
-    parentNode.style.letterSpacing = '0';
-    parentNode.appendChild(node);
-    document.body.appendChild(parentNode);
-
-    // Remember width with no applied web font
-    var width = node.offsetWidth;
-    node.style.fontFamily = trimFontOptions(font) + ', ' + family;
-    return { node: node, w: width, parent: parentNode };
-  }
+  
 
   function checkLoadedFonts() {
     var i;
