@@ -5735,26 +5735,26 @@ IShapeElement.prototype = {
     return false;
   },
   renderModifiers: function () {
-    // if (!this.shapeModifiers.length) {
-    //   return;
-    // }
-    // var i;
-    // var len = this.shapes.length;
-    // for (i = 0; i < len; i += 1) {
-    //   this.shapes[i].sh.reset();
-    // }
+    if (!this.shapeModifiers.length) {
+      return;
+    }
+    var i;
+    var len = this.shapes.length;
+    for (i = 0; i < len; i += 1) {
+      this.shapes[i].sh.reset();
+    }
 
-    // len = this.shapeModifiers.length;
-    // var shouldBreakProcess;
-    // for (i = len - 1; i >= 0; i -= 1) {
-    //   shouldBreakProcess = this.shapeModifiers[i].processShapes(this._isFirstFrame);
-    //   // workaround to fix cases where a repeater resets the shape so the following processes get called twice
-    //   // TODO: find a better solution for this
-    //   if (shouldBreakProcess) {
-    //     console.log("")
-    //     break;
-    //   }
-    // }
+    len = this.shapeModifiers.length;
+    var shouldBreakProcess;
+    for (i = len - 1; i >= 0; i -= 1) {
+      shouldBreakProcess = this.shapeModifiers[i].processShapes(this._isFirstFrame);
+      // workaround to fix cases where a repeater resets the shape so the following processes get called twice
+      // TODO: find a better solution for this
+      if (shouldBreakProcess) {
+        console.log("")
+        break;
+      }
+    }
   },
   lcEnum: {
     1: 'butt',

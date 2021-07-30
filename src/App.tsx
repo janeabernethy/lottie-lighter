@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
-import Lottie from './lottie-web-master/build/player/lottie_light.js'
-import animation from './timeremap.json'
+import Lottie from './lottie-web-master/build/player/lottie_light.min.js'
+import animation from './hot-dog-jump.json'
 
 function App() {
   return (
