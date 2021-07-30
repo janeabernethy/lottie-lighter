@@ -2260,47 +2260,6 @@ var TransformPropertyFactory = (function () {
           .rotateY(this.or.v[1])
           .rotateX(this.or.v[0]);
       }
-      if (this.autoOriented) {
-        var v1;
-        var v2;
-        frameRate = this.elem.globalData.frameRate;
-        if (this.p && this.p.keyframes && this.p.getValueAtTime) {
-          if (this.p._caching.lastFrame + this.p.offsetTime <= this.p.keyframes[0].t) {
-            v1 = this.p.getValueAtTime((this.p.keyframes[0].t + 0.01) / frameRate, 0);
-            v2 = this.p.getValueAtTime(this.p.keyframes[0].t / frameRate, 0);
-          } else if (this.p._caching.lastFrame + this.p.offsetTime >= this.p.keyframes[this.p.keyframes.length - 1].t) {
-            v1 = this.p.getValueAtTime((this.p.keyframes[this.p.keyframes.length - 1].t / frameRate), 0);
-            v2 = this.p.getValueAtTime((this.p.keyframes[this.p.keyframes.length - 1].t - 0.05) / frameRate, 0);
-          } else {
-            v1 = this.p.pv;
-            v2 = this.p.getValueAtTime((this.p._caching.lastFrame + this.p.offsetTime - 0.01) / frameRate, this.p.offsetTime);
-          }
-        } else if (this.px && this.px.keyframes && this.py.keyframes && this.px.getValueAtTime && this.py.getValueAtTime) {
-          v1 = [];
-          v2 = [];
-          var px = this.px;
-          var py = this.py;
-          if (px._caching.lastFrame + px.offsetTime <= px.keyframes[0].t) {
-            v1[0] = px.getValueAtTime((px.keyframes[0].t + 0.01) / frameRate, 0);
-            v1[1] = py.getValueAtTime((py.keyframes[0].t + 0.01) / frameRate, 0);
-            v2[0] = px.getValueAtTime((px.keyframes[0].t) / frameRate, 0);
-            v2[1] = py.getValueAtTime((py.keyframes[0].t) / frameRate, 0);
-          } else if (px._caching.lastFrame + px.offsetTime >= px.keyframes[px.keyframes.length - 1].t) {
-            v1[0] = px.getValueAtTime((px.keyframes[px.keyframes.length - 1].t / frameRate), 0);
-            v1[1] = py.getValueAtTime((py.keyframes[py.keyframes.length - 1].t / frameRate), 0);
-            v2[0] = px.getValueAtTime((px.keyframes[px.keyframes.length - 1].t - 0.01) / frameRate, 0);
-            v2[1] = py.getValueAtTime((py.keyframes[py.keyframes.length - 1].t - 0.01) / frameRate, 0);
-          } else {
-            v1 = [px.pv, py.pv];
-            v2[0] = px.getValueAtTime((px._caching.lastFrame + px.offsetTime - 0.01) / frameRate, px.offsetTime);
-            v2[1] = py.getValueAtTime((py._caching.lastFrame + py.offsetTime - 0.01) / frameRate, py.offsetTime);
-          }
-        } else {
-          v2 = defaultVector;
-          v1 = v2;
-        }
-        this.v.rotate(-Math.atan2(v1[1] - v2[1], v1[0] - v2[0]));
-      }
       if (this.data.p && this.data.p.s) {
         if (this.data.p.z) {
           this.v.translate(this.px.v, this.py.v, -this.pz.v);
@@ -2346,11 +2305,6 @@ var TransformPropertyFactory = (function () {
         .rotateX(this.or.v[0]);
       this.appliedTransformations = 4;
     }
-  }
-
-  function autoOrient() {
-    //
-    // var prevP = this.getValueAtTime();
   }
 
   function addDynamicProperty(prop) {
@@ -2418,7 +2372,6 @@ var TransformPropertyFactory = (function () {
     applyToMatrix: applyToMatrix,
     getValue: processKeys,
     precalculateMatrix: precalculateMatrix,
-    autoOrient: autoOrient,
   };
 
   extendPrototype([DynamicPropertyContainer], TransformProperty);
@@ -4844,9 +4797,6 @@ TransformElement.prototype = {
       _opMdf: false,
       mat: new Matrix(),
     };
-    if (this.data.ao) {
-      this.finalTransform.mProp.autoOriented = true;
-    }
 
     // TODO: check TYPE 11: Guided elements
     if (this.data.ty !== 11) {
